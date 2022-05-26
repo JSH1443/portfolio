@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1653151349 source:/home/jung/portfolio/AVR/servo_motor/main.c
+	<avr/io.h>
+	<util/delay.h>
+	<avr/interrupt.h>
+
