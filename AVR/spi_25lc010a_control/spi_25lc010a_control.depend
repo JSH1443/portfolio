@@ -1,0 +1,13 @@
+# depslib dependency file v1.0
+1655093479 source:/home/jung/portfolio/AVR/spi_25lc010a_control/main.c
+	<avr/io.h>
+	<avr/delay.h>
+	"uart.h"
+
+1655093738 /home/jung/portfolio/AVR/spi_25lc010a_control/uart.h
+	<avr/io.h>
+	<util/delay.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
