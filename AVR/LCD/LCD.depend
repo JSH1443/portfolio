@@ -1,5 +1,0 @@
-# depslib dependency file v1.0
-1653151155 source:/home/jung/portfolio/AVR/LCD/main.c
-	<avr/io.h>
-	<util/delay.h>
-
