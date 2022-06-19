@@ -1,15 +1,17 @@
 #define F_CPU          16000000UL
 
-#include <avr/io.h>
-#include <util/delay.h>
-#include <stdio.h>
+
+#include "phtocell.h"
+#include "lcd.h"
 #include "uart.h"
+
+#define led_on      600
 
 void photocell_init (void)
 {
 
     ADMUX |= (1 << REFS0);
-    ADMUX |= (1 << MUX0);
+    ADMUX |= (1 << MUX1);
     ADCSRA |= (1 << ADEN);
     ADCSRA |= (1 << ADPS2);
     ADCSRA |= (1 << ADPS0);
@@ -17,7 +19,7 @@ void photocell_init (void)
     ADCSRA |= (1 << ADSC);
 
     DDRF |= (1 << PORT1);
-    DDRE |= (1 << PORT0);
+    DDRH |= (1 << PORT5);
 }
 
 int read_photocell (void)
@@ -36,37 +38,34 @@ void photocell_string (int n, char *buf)
     buf[4] = '\0';
 }
 
-int photocell_mode (int auto_flag2)
+int photocell_mode (void)
 {
-    int read;
-    char buf[5];
 
-    uart_init();
-    photocell_init();
-    while(1)
-    {
-     if(auto_flag2!=1)
-            break;
+     int read;
+     char buf[5];
 
-     if(auto_flag2==1)
-      {
+
         read = read_photocell();
         photocell_string(read, buf);
         uart_string_trans(buf);
         uart_string_trans("\n");
 
-        if (read > 600)
+        if (read > led_on)
         {
+            uart_string_trans("led on\n");
+            lcd_write_string("led on\n");
             PORTE |= (1 << PORT0);
+
         }
         else
         {
+            uart_string_trans("led off\n");
+            lcd_write_string("led off\n");
             PORTE &= ~(1 << PORT0);
+
         }
-        _delay_ms(500);
-      }
-    }
-}
+
+  }
 
 
 
