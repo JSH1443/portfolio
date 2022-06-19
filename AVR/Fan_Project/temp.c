@@ -1,15 +1,24 @@
 #define F_CPU          16000000UL
 
-#include <avr/io.h>
-#include <util/delay.h>
-#include <stdio.h>
+#define low_min      32
+#define low_max      34
+#define middle_min   34
+#define middle_max   36
+#define high_min     36
+#define stop_min     32
+
+
+#include "lcd.h"
 #include "uart.h"
+#include "temp.h"
+#include "bldc.h"
 
 
 
 void temp_init (void)
 {
     ADMUX |= (1 << REFS0);
+    ADMUX |= (1 << MUX0);
     ADCSRA |= (1 << ADEN);
     ADCSRA |= (1 << ADPS2);
     ADCSRA |= (1 << ADPS0);
@@ -35,47 +44,36 @@ void temp_tring (int n, char *buf)
     buf[4] = '\0';
 }
 
-void temp_mode (int auto_flag2)
+void temperature_sensor (void)
 {
+
     int read;
     char buf[5];
-    int temp;
 
-    uart_init();
-    temp_init();
-   while(1)
-   {
-     if(auto_flag2!=1)
-            break;
 
-     if(auto_flag2==1)
-     {
-        read = (5.0 * read_temp() * 100.0) / 1024;
+       read = (5.0 * read_temp() * 100.0) / 1024;
         temp_tring(read, buf);
         uart_string_trans(buf);
         uart_string_trans("\n");
-        lcd_write_string(read);
 
-         if (read < 28 && read > 24)
+         if (read<stop_min)
          {
-            temp = 1;
+           bldc_stop();
          }
-        else if (read>28 && read<30)
+
+         else if (read >low_min && read < low_max )
          {
-            temp = 2;
+            bldc_low();
          }
-        else if (read>30)
+        else if (read>middle_min && read<middle_max)
          {
-            temp = 3;
+            bldc_middle();
          }
-         else if(read<24)
+        else if (read>high_min)
          {
-           temp = 4;
+            bldc_high();
          }
-         auto_BLDC(temp, auto_flag2);
-         _delay_ms(500);
-        }
-     }
+
 }
 
 
