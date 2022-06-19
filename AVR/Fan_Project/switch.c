@@ -1,64 +1,248 @@
-#include <avr/io.h>
-#include <util/delay.h>
-#include <avr/interrupt.h>
-#include <stdbool.h>
+#define F_CPU       16000000UL
+
+#define      low_speed        1
+#define      middle_speed     2
+#define      high_speed       3
+#define      stop             4
+
+#define     turn_start     2
+#define     turn_stop      3
+#define     reset          4
 
 
-unsigned int manual_flag1=0;
-unsigned int auto_flag1=0;
-unsigned int manual_flag2=0;
-unsigned int auto_flag2=0;
-unsigned int reset_timer =0;
+#include "uart.h"
+#include "lcd.h"
+#include "switch.h"
+#include "bldc.h"
+#include "servo.h"
+#include "temp.h"
+#include "phtocell.h"
+#include "bluetooht.h"
 
-int switch_mode (int sw1, int sw2)
+
+bool manual_mode_select=0;
+bool auto_mode_select=0;
+bool manual_mode_run=0;
+bool auto_mode_run=0;
+volatile int intensity_sw=0;
+volatile int action_sw=0;
+float duty = 5.0;
+
+void sw_init (void)
 {
-   if(sw1%2==1 && manual_flag2==0 && auto_flag2==0)
-    {
-     manual_flag1 =1;
-     auto_flag1 =0;
-    }
 
-    else if (sw1%2==0 && manual_flag2==0 && auto_flag2==0)
-    {
-        auto_flag1 =1;
-        manual_flag1 =0;
-    }
+    EICRA |= (1 << ISC21);
+    //EICRA |= (1 << ISC20);
+    EICRA |= (1 << ISC31);
+    //EICRA |= (1 << ISC30);
 
-   if (sw2==true && manual_flag1 ==1)
-    {
-        manual_flag2 =1;
-    }
-    else if(sw2==true && auto_flag1 ==1)
-    {
-        auto_flag2 =1;
-    }
+    EIMSK |= (1 << INT2);
+    EIMSK |= (1 << INT3);
 
-    if(sw2==3 && manual_flag2==1)
-    {
-        manual_flag2=0;
-        manual_flag1=0;
-        sw1=0;
-        sw2=0;
-        uart_string_trans("Select Mode\n");
-        lcd_write_string("Select Mode\n");
-    }
-
-    if(sw2==3 && auto_flag2==1 )
-    {
-        auto_flag2=0;
-        auto_flag1=0;
-        sw1=0;
-        sw2=0;
-        uart_string_trans("Select Mode\n");
-        lcd_write_string("Select Mode\n");
-    }
-
-    lcd_mode1(manual_flag1, auto_flag1);
-    lcd_mode2(manual_flag2, auto_flag2);
-    fan(sw1, sw2, manual_flag2);
-    manual_BLDC(sw1, manual_flag2, auto_flag2);
-    manual_servo(sw2, manual_flag2);
-    temp_mode(auto_flag2);
-    photocell_mode(auto_flag2);
+    sei();
 }
 
+void switch_mode (void)
+{
+    if(intensity_sw%2==1 && manual_mode_run==0 && auto_mode_run==0)
+    {
+     manual_mode_select =1;
+     auto_mode_select =0;
+     uart_string_trans("Manual Mode\n");
+     lcd_write_string("Manual Mode\n");
+    }
+
+    else if (intensity_sw%2==0 && manual_mode_run==0 && auto_mode_run==0)
+    {
+        auto_mode_select =1;
+        manual_mode_select =0;
+        uart_string_trans("Auto Mode\n");
+        lcd_write_string("Auto Mode\n");
+    }
+
+       if(action_sw==turn_start)
+         {
+            duty +=0.1;
+            servo_counter_clockwise(duty);
+
+            if(duty>25.0)
+            {
+             for(duty=25.0; duty>5.0; duty-=0.1)
+             {
+                servo_clockwise(duty);
+             }
+
+            }
+         }
+
+         if(action_sw==turn_stop)
+         {
+          servo_stop();
+         }
+
+
+
+   if (action_sw==1 && manual_mode_select ==1)
+    {
+        manual_mode_run =1;
+        uart_string_trans("Manual Mode run\n");
+        lcd_write_string("Manual Mode run\n");
+
+       if(intensity_sw==low_speed)
+       {
+           bldc_low();
+       }
+
+        if(intensity_sw==middle_speed)
+        {
+           bldc_middle();
+         }
+
+          if(intensity_sw==high_speed)
+          {
+            bldc_high();
+          }
+
+         if(intensity_sw==stop)
+         {
+           bldc_stop();
+         }
+
+     }
+
+    else if(action_sw==1 && auto_mode_select ==1)
+    {
+        auto_mode_run =1;
+        uart_string_trans("Auto Mode run\n");
+        lcd_write_string("Auto Mode run\n");
+        temperature_sensor();
+        photocell_mode();
+    }
+
+
+      if(action_sw==reset && (manual_mode_run==1 || auto_mode_run==1))
+        {
+            auto_mode_run=0;
+            auto_mode_select=0;
+            manual_mode_run=0;
+            manual_mode_select=0;
+            intensity_sw=0;
+            action_sw=0;
+            uart_string_trans("Select Mode\n");
+            lcd_write_string("Select Mode\n");
+        }
+if(intensity_sw%2==1 && manual_mode_run==0 && auto_mode_run==0)
+    {
+     manual_mode_select =1;
+     auto_mode_select =0;
+     uart_string_trans("Manual Mode\n");
+     lcd_write_string("Manual Mode\n");
+    }
+
+    else if (intensity_sw%2==0 && manual_mode_run==0 && auto_mode_run==0)
+    {
+        auto_mode_select =1;
+        manual_mode_select =0;
+        uart_string_trans("Auto Mode\n");
+        lcd_write_string("Auto Mode\n");
+    }
+
+       if(action_sw==turn_start)
+         {
+            duty +=0.1;
+            servo_counter_clockwise(duty);
+
+            if(duty>25.0)
+            {
+             for(duty=25.0; duty>5.0; duty-=0.1)
+             {
+                servo_clockwise(duty);
+             }
+
+            }
+         }
+
+         if(action_sw==turn_stop)
+         {
+          servo_stop();
+         }
+
+
+
+   if (action_sw==1 && manual_mode_select ==1)
+    {
+        manual_mode_run =1;
+        uart_string_trans("Manual Mode run\n");
+        lcd_write_string("Manual Mode run\n");
+
+       if(intensity_sw==low_speed)
+       {
+           bldc_low();
+       }
+
+        if(intensity_sw==middle_speed)
+        {
+           bldc_middle();
+         }
+
+          if(intensity_sw==high_speed)
+          {
+            bldc_high();
+          }
+
+         if(intensity_sw==stop)
+         {
+           bldc_stop();
+         }
+
+     }
+
+    else if(action_sw==1 && auto_mode_select ==1)
+    {
+        auto_mode_run =1;
+        uart_string_trans("Auto Mode run\n");
+        lcd_write_string("Auto Mode run\n");
+        temperature_sensor();
+        photocell_mode();
+    }
+
+
+      if(action_sw==reset && (manual_mode_run==1 || auto_mode_run==1))
+        {
+            auto_mode_run=0;
+            auto_mode_select=0;
+            manual_mode_run=0;
+            manual_mode_select=0;
+            intensity_sw=0;
+            action_sw=0;
+            uart_string_trans("Select Mode\n");
+            lcd_write_string("Select Mode\n");
+        }
+
+}
+
+ISR(INT2_vect)
+{
+    intensity_sw ++;
+
+ if(intensity_sw >4)
+  {
+    intensity_sw=0;
+  }
+     _delay_ms(10);
+     EIFR |= (1 << INTF2);
+
+}
+
+ISR(INT3_vect)
+{
+    action_sw ++;
+
+  if(action_sw>4)
+   {
+    action_sw=0;
+   }
+
+      _delay_ms(10);
+     EIFR |= (1 << INTF3);
+}
