@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        Manual_Mode
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="style.css" rel="stylesheet">
+    <style>
+        h1{
+            
+            color: blue;
+            background-color: rgb(200,200,200);
+            text-align: center;
+            font-size: 60px;    
+            font-family: 'Times New Roman',Times,serif;    
+         }
+     
+    </style>   
+</head>
+
+
+<body bgcolor="#708090">
+    <h1>Manual Mode</h1>
+    <hr>
+    <b1>Fan Speed:</b1>
+    <button type="button" onClick="location.href='http://localhost:5000/Bldc_Stop';">Stop</button>
+    <button type="button" onClick="location.href='http://localhost:5000/Bldc_Low';">Low</button>
+    <button type="button" onClick="location.href='http://localhost:5000/Bldc_Midde';">Midde</button> 
+    <button type="button" onClick="location.href='http://localhost:5000/Bldc_High';">High</button>
+    <br>
+    <b1>Fan Turn:</b1>
+    <button type="button" onClick="location.href='http://localhost:5000/Servo_Start';">Turn Start</button>
+    <button type="button" onClick="location.href='http://localhost:5000/Servo_Stop';">Turn Stop</button>
+    <br>
+    <button type="button" onClick="location.href='http://localhost:5000/Back';">Back</button>
+
+</body>
+</html>
