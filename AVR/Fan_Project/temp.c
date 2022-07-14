@@ -1,11 +1,12 @@
 #define F_CPU          16000000UL
 
-#define low_min      32
-#define low_max      34
-#define middle_min   34
-#define middle_max   36
-#define high_min     36
-#define stop_min     32
+#define LOW_MIN      32
+#define LOW_MAX      34
+#define MIDDLE_MIN   34
+#define MIDDLE_MAX   36
+#define HIGH_MIN     36
+#define STOP_MIN     32
+#define CELSIUS      0.488 //5*100/1024
 
 
 #include "lcd.h"
@@ -17,6 +18,12 @@
 
 void temp_init (void)
 {
+    /*ADMUX |= (1 << REFS0);
+    ADCSRA |= (1 << ADEN);
+    ADCSRA |= (1 << ADPS2);
+    ADCSRA |= (1 << ADPS0);
+    ADCSRA |= (1 << ADIF);
+    ADCSRA |= (1 << ADSC);*/
     ADMUX |= (1 << REFS0);
     ADMUX |= (1 << MUX0);
     ADCSRA |= (1 << ADEN);
@@ -51,25 +58,25 @@ void temperature_sensor (void)
     char buf[5];
 
 
-       read = (5.0 * read_temp() * 100.0) / 1024;
+       read = read_temp() * CELSIUS;
         temp_tring(read, buf);
         uart_string_trans(buf);
         uart_string_trans("\n");
 
-         if (read<stop_min)
+         if (read<STOP_MIN)
          {
            bldc_stop();
          }
 
-         else if (read >low_min && read < low_max )
+         else if (read > LOW_MIN && read < LOW_MAX )
          {
             bldc_low();
          }
-        else if (read>middle_min && read<middle_max)
+        else if (read > MIDDLE_MIN && read < MIDDLE_MAX)
          {
             bldc_middle();
          }
-        else if (read>high_min)
+        else if (read > HIGH_MIN)
          {
             bldc_high();
          }
