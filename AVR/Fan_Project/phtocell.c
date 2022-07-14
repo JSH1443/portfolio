@@ -5,7 +5,7 @@
 #include "lcd.h"
 #include "uart.h"
 
-#define led_on      600
+#define LED_ON      600
 
 void photocell_init (void)
 {
@@ -18,7 +18,7 @@ void photocell_init (void)
     ADCSRA |= (1 << ADIF);
     ADCSRA |= (1 << ADSC);
 
-    DDRF |= (1 << PORT1);
+    DDRF |= (1 << PORT2);
     DDRH |= (1 << PORT5);
 }
 
@@ -50,7 +50,7 @@ int photocell_mode (void)
         uart_string_trans(buf);
         uart_string_trans("\n");
 
-        if (read > led_on)
+        if (read > LED_ON)
         {
             uart_string_trans("led on\n");
             lcd_write_string("led on\n");
